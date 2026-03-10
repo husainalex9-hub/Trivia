@@ -12,6 +12,63 @@ app.use(express.json());
 let gameState = null;
 
 // ---------------------------------------------------------------------------
+// Custom Food & Drink category (ID 999)
+// ---------------------------------------------------------------------------
+const FOOD_CATEGORY_ID = 999;
+const FOOD_QUESTIONS = [
+  { question: "What country is the origin of the croissant?", correctAnswer: "Austria", incorrectAnswers: ["France", "Italy", "Germany"] },
+  { question: "What is the main ingredient in hummus?", correctAnswer: "Chickpeas", incorrectAnswers: ["Lentils", "Black beans", "Tahini"] },
+  { question: "Which spice is the most expensive by weight?", correctAnswer: "Saffron", incorrectAnswers: ["Vanilla", "Cardamom", "Cinnamon"] },
+  { question: "What type of pastry is used to make a traditional eclair?", correctAnswer: "Choux pastry", incorrectAnswers: ["Puff pastry", "Shortcrust pastry", "Filo pastry"] },
+  { question: "What fruit is known as the 'king of fruits' in Southeast Asia?", correctAnswer: "Durian", incorrectAnswers: ["Mango", "Jackfruit", "Lychee"] },
+  { question: "What country did french fries originate from?", correctAnswer: "Belgium", incorrectAnswers: ["France", "Netherlands", "United States"] },
+  { question: "What is the most consumed meat worldwide?", correctAnswer: "Pork", incorrectAnswers: ["Chicken", "Beef", "Lamb"] },
+  { question: "Wasabi is traditionally made from the root of what plant?", correctAnswer: "Japanese horseradish", incorrectAnswers: ["Ginger", "Mustard", "Radish"] },
+  { question: "What cheese is traditionally used in a Greek salad?", correctAnswer: "Feta", incorrectAnswers: ["Halloumi", "Mozzarella", "Goat cheese"] },
+  { question: "Which nut is used to make marzipan?", correctAnswer: "Almond", incorrectAnswers: ["Pistachio", "Cashew", "Hazelnut"] },
+  { question: "What is the hottest chili pepper in the world as of 2023?", correctAnswer: "Carolina Reaper", incorrectAnswers: ["Trinidad Scorpion", "Ghost Pepper", "Habanero"] },
+  { question: "Kimchi is a traditional fermented dish from which country?", correctAnswer: "South Korea", incorrectAnswers: ["Japan", "China", "Vietnam"] },
+  { question: "What grain is sake made from?", correctAnswer: "Rice", incorrectAnswers: ["Barley", "Wheat", "Corn"] },
+  { question: "What Italian city is the birthplace of pizza?", correctAnswer: "Naples", incorrectAnswers: ["Rome", "Milan", "Florence"] },
+  { question: "What is the primary ingredient in tofu?", correctAnswer: "Soybeans", incorrectAnswers: ["Rice", "Chickpeas", "Lentils"] },
+  { question: "Which vitamin is abundant in citrus fruits?", correctAnswer: "Vitamin C", incorrectAnswers: ["Vitamin A", "Vitamin D", "Vitamin B12"] },
+  { question: "What is the world's most popular soft drink?", correctAnswer: "Coca-Cola", incorrectAnswers: ["Pepsi", "Sprite", "Fanta"] },
+  { question: "What type of bean is used to make chocolate?", correctAnswer: "Cacao bean", incorrectAnswers: ["Coffee bean", "Vanilla bean", "Tonka bean"] },
+  { question: "Goulash is a traditional dish from which country?", correctAnswer: "Hungary", incorrectAnswers: ["Germany", "Austria", "Czech Republic"] },
+  { question: "What is the most expensive spice after saffron?", correctAnswer: "Vanilla", incorrectAnswers: ["Cardamom", "Cinnamon", "Cloves"] },
+  { question: "Which country consumes the most coffee per capita?", correctAnswer: "Finland", incorrectAnswers: ["Brazil", "Italy", "United States"] },
+  { question: "What does 'al dente' mean in cooking?", correctAnswer: "To the tooth", incorrectAnswers: ["To the bite", "Half cooked", "Slightly raw"] },
+  { question: "What is the main ingredient in a traditional Japanese miso soup?", correctAnswer: "Fermented soybean paste", incorrectAnswers: ["Seaweed broth", "Fish stock", "Rice vinegar"] },
+  { question: "Which fruit has its seeds on the outside?", correctAnswer: "Strawberry", incorrectAnswers: ["Raspberry", "Blueberry", "Kiwi"] },
+  { question: "What is the most widely eaten food in the world?", correctAnswer: "Rice", incorrectAnswers: ["Wheat", "Corn", "Potatoes"] },
+  { question: "Prosciutto originates from which country?", correctAnswer: "Italy", incorrectAnswers: ["Spain", "Portugal", "France"] },
+  { question: "What spice gives curry its yellow color?", correctAnswer: "Turmeric", incorrectAnswers: ["Saffron", "Cumin", "Paprika"] },
+  { question: "What is the main ingredient in guacamole?", correctAnswer: "Avocado", incorrectAnswers: ["Tomato", "Lime", "Cilantro"] },
+  { question: "Which country is the largest producer of olive oil?", correctAnswer: "Spain", incorrectAnswers: ["Italy", "Greece", "Turkey"] },
+  { question: "What type of milk is traditionally used to make authentic Italian mozzarella?", correctAnswer: "Water buffalo milk", incorrectAnswers: ["Cow milk", "Goat milk", "Sheep milk"] },
+  { question: "What is the national dish of Japan?", correctAnswer: "Curry rice", incorrectAnswers: ["Sushi", "Ramen", "Tempura"] },
+  { question: "What food is the most stolen in the world?", correctAnswer: "Cheese", incorrectAnswers: ["Chocolate", "Meat", "Alcohol"] },
+  { question: "Which country invented ice cream?", correctAnswer: "China", incorrectAnswers: ["Italy", "France", "United States"] },
+  { question: "What does 'tempura' in Japanese cooking refer to?", correctAnswer: "Battered and deep-fried food", incorrectAnswers: ["Grilled food", "Raw food", "Steamed food"] },
+  { question: "What is the sourest candy in the world?", correctAnswer: "Toxic Waste", incorrectAnswers: ["Warheads", "Sour Patch Kids", "Cry Baby"] },
+  { question: "What is the only fruit with seeds on the outside?", correctAnswer: "Strawberry", incorrectAnswers: ["Kiwi", "Fig", "Pomegranate"] },
+  { question: "Which country is the world's largest producer of bananas?", correctAnswer: "India", incorrectAnswers: ["Ecuador", "Philippines", "Brazil"] },
+  { question: "What is the most expensive pizza in the world topped with?", correctAnswer: "Gold leaf", incorrectAnswers: ["Truffles", "Caviar", "Lobster"] },
+  { question: "Pad Thai is a famous dish from which country?", correctAnswer: "Thailand", incorrectAnswers: ["Vietnam", "Malaysia", "Indonesia"] },
+  { question: "What is the primary ingredient in falafel?", correctAnswer: "Chickpeas", incorrectAnswers: ["Lentils", "Fava beans", "Black beans"] },
+  { question: "Which berry is known as a superfood and is native to South America?", correctAnswer: "Acai", incorrectAnswers: ["Goji", "Blueberry", "Cranberry"] },
+  { question: "What gas makes bread rise?", correctAnswer: "Carbon dioxide", incorrectAnswers: ["Oxygen", "Nitrogen", "Hydrogen"] },
+  { question: "Borscht is a beet soup that originates from which region?", correctAnswer: "Eastern Europe", incorrectAnswers: ["Scandinavia", "Central Asia", "Middle East"] },
+  { question: "What is the world's largest herb?", correctAnswer: "Banana plant", incorrectAnswers: ["Bamboo", "Sunflower", "Pineapple plant"] },
+  { question: "Which country is credited with inventing the sandwich?", correctAnswer: "England", incorrectAnswers: ["France", "Italy", "United States"] },
+  { question: "What percentage of a watermelon is water?", correctAnswer: "92%", incorrectAnswers: ["85%", "78%", "96%"] },
+  { question: "What is the most popular pizza topping in the United States?", correctAnswer: "Pepperoni", incorrectAnswers: ["Mushrooms", "Sausage", "Extra cheese"] },
+  { question: "What nut is in the middle of a Ferrero Rocher?", correctAnswer: "Hazelnut", incorrectAnswers: ["Almond", "Peanut", "Walnut"] },
+  { question: "Naan bread is traditionally associated with which cuisine?", correctAnswer: "Indian", incorrectAnswers: ["Turkish", "Arabic", "Persian"] },
+  { question: "What is the most consumed beverage in the world after water?", correctAnswer: "Tea", incorrectAnswers: ["Coffee", "Beer", "Milk"] },
+];
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -212,6 +269,11 @@ app.get("/api/categories", async (req, res) => {
     const response = await fetch("https://opentdb.com/api_category.php");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
+    // Inject custom Food & Drink category
+    if (data.trivia_categories) {
+      data.trivia_categories.push({ id: FOOD_CATEGORY_ID, name: "Food & Drink" });
+      data.trivia_categories.sort((a, b) => a.name.localeCompare(b.name));
+    }
     res.json(data);
   } catch (err) {
     res.status(502).json({ error: "Failed to fetch categories", detail: err.message });
@@ -241,10 +303,17 @@ app.post("/api/new-game", async (req, res) => {
     // Plus 1 final Jeopardy question (taken from first category's 11th slot or a separate fetch)
     const allCategoryQuestions = [];
     for (let i = 0; i < 6; i++) {
-      if (i > 0) await sleep(5500); // generous delay between requests to avoid rate limiting
-      console.log(`Fetching questions for category ${categoryIds[i]} (${i + 1}/6)...`);
-      const qs = await fetchQuestions(categoryIds[i], diff, 10, token);
-      allCategoryQuestions.push(qs);
+      if (Number(categoryIds[i]) === FOOD_CATEGORY_ID) {
+        // Use hardcoded food questions — pick 10 random ones
+        const shuffled = shuffle(FOOD_QUESTIONS);
+        allCategoryQuestions.push(shuffled.slice(0, 10));
+        console.log(`Using custom Food & Drink questions (${i + 1}/6)`);
+      } else {
+        if (allCategoryQuestions.length > 0) await sleep(5500);
+        console.log(`Fetching questions for category ${categoryIds[i]} (${i + 1}/6)...`);
+        const qs = await fetchQuestions(categoryIds[i], diff, 10, token);
+        allCategoryQuestions.push(qs);
+      }
     }
 
     // Fetch 1 final Jeopardy question from the first category
@@ -284,6 +353,7 @@ app.post("/api/new-game", async (req, res) => {
       const catRes = await fetch("https://opentdb.com/api_category.php");
       const catData = await catRes.json();
       categoryNames = categoryIds.map((id) => {
+        if (Number(id) === FOOD_CATEGORY_ID) return "Food & Drink";
         const found = catData.trivia_categories.find((c) => c.id === id || c.id === Number(id));
         return found ? found.name : `Category ${id}`;
       });
