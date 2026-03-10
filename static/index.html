@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia Night</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>TRIVIA NIGHT <span style="font-size:0.5em; color:#fff; letter-spacing:1px;">Are you a retard?</span></h1>
+    <div class="scoreboard">
+      <div class="player player-1 active" id="p1" onclick="switchPlayer(1)">
+        <span class="player-label">P1</span> <span id="score1">0</span>
+      </div>
+      <div class="player player-2" id="p2" onclick="switchPlayer(2)">
+        <span class="player-label">P2</span> <span id="score2">0</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="board" class="board"></div>
+
+  <!-- Question Modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-category" id="modal-category"></div>
+      <div class="modal-value" id="modal-value"></div>
+      <div class="modal-question" id="modal-question"></div>
+      <form id="answer-form">
+        <input type="text" id="answer-input" placeholder="What is..." autocomplete="off" autofocus>
+        <button type="submit">Submit</button>
+      </form>
+      <div id="result" class="result hidden"></div>
+      <button id="close-modal" class="close-btn hidden">Back to Board</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
