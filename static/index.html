@@ -7,35 +7,172 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>TRIVIA NIGHT <span style="font-size:0.5em; color:#fff; letter-spacing:1px;">Are you a retard?</span></h1>
-    <div class="scoreboard">
-      <div class="player player-1 active" id="p1" onclick="switchPlayer(1)">
-        <span class="player-label">P1</span> <span id="score1">0</span>
+
+  <!-- ========== SCREEN: LOBBY ========== -->
+  <div id="screen-lobby" class="screen active">
+    <h1>TRIVIA NIGHT <span>Are you a retard?</span></h1>
+
+    <div class="player-inputs">
+      <input type="text" id="p1-name" placeholder="Player 1 Name" autocomplete="off">
+      <input type="text" id="p2-name" placeholder="Player 2 Name" autocomplete="off">
+    </div>
+
+    <div class="mode-select">
+      <button class="mode-btn" data-mode="free">Free Text</button>
+      <button class="mode-btn" data-mode="mc">Multiple Choice</button>
+    </div>
+
+    <div class="diff-select">
+      <button class="diff-btn" data-diff="easy">Easy</button>
+      <button class="diff-btn" data-diff="medium">Medium</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+
+    <div class="sound-toggle">
+      <label for="sound-toggle">Sound</label>
+      <input type="checkbox" id="sound-toggle">
+    </div>
+
+    <div id="category-grid"></div>
+
+    <button id="start-btn">Start Game</button>
+    <button id="view-leaderboard-btn">View Leaderboard</button>
+  </div>
+
+  <!-- ========== SCREEN: LOADING ========== -->
+  <div id="screen-loading" class="screen">
+    <p>Fetching questions...</p>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ========== SCREEN: BOARD ========== -->
+  <div id="screen-board" class="screen">
+    <div class="board-header">
+      <div id="round-label"></div>
+      <div class="player-display" id="player-display-1">
+        <span class="player-name"></span>
+        <span class="player-score"></span>
       </div>
-      <div class="player player-2" id="p2" onclick="switchPlayer(2)">
-        <span class="player-label">P2</span> <span id="score2">0</span>
+      <div class="player-display" id="player-display-2">
+        <span class="player-name"></span>
+        <span class="player-score"></span>
       </div>
     </div>
-  </header>
+    <div id="board-grid"></div>
+  </div>
 
-  <div id="board" class="board"></div>
+  <!-- ========== SCREEN: QUESTION ========== -->
+  <div id="screen-question" class="screen">
+    <div id="q-category"></div>
+    <div id="q-value"></div>
+    <div id="q-text"></div>
 
-  <!-- Question Modal -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-category" id="modal-category"></div>
-      <div class="modal-value" id="modal-value"></div>
-      <div class="modal-question" id="modal-question"></div>
-      <form id="answer-form">
-        <input type="text" id="answer-input" placeholder="What is..." autocomplete="off" autofocus>
+    <form id="text-answer-form">
+      <input type="text" id="text-answer-input" placeholder="Your answer..." autocomplete="off">
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="mc-choices">
+      <button class="mc-btn"></button>
+      <button class="mc-btn"></button>
+      <button class="mc-btn"></button>
+      <button class="mc-btn"></button>
+    </div>
+
+    <div id="q-result"></div>
+    <button id="back-to-board">Back to Board</button>
+  </div>
+
+  <!-- ========== SCREEN: DAILY DOUBLE ========== -->
+  <div id="screen-daily-double" class="screen">
+    <h2>DAILY DOUBLE!</h2>
+    <div id="dd-score"></div>
+
+    <div class="dd-wager-area">
+      <label>Min: <span id="dd-min"></span></label>
+      <input type="number" id="dd-wager">
+      <label>Max: <span id="dd-max"></span></label>
+    </div>
+    <button id="dd-lock-btn">Lock In Wager</button>
+
+    <div id="dd-question-area" class="hidden">
+      <div id="dd-q-text"></div>
+
+      <form id="dd-text-answer-form">
+        <input type="text" id="dd-text-answer-input" placeholder="Your answer..." autocomplete="off">
         <button type="submit">Submit</button>
       </form>
-      <div id="result" class="result hidden"></div>
-      <button id="close-modal" class="close-btn hidden">Back to Board</button>
+
+      <div id="dd-mc-choices">
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+      </div>
+
+      <div id="dd-result"></div>
+      <button id="dd-continue-btn">Continue</button>
     </div>
   </div>
 
+  <!-- ========== SCREEN: TRANSITION ========== -->
+  <div id="screen-transition" class="screen">
+    <div id="transition-text"></div>
+  </div>
+
+  <!-- ========== SCREEN: FINAL CATEGORY ========== -->
+  <div id="screen-final-category" class="screen">
+    <h2>FINAL JEOPARDY</h2>
+    <div id="final-category-name"></div>
+
+    <div class="final-wager-section">
+      <label id="final-wager-label-1"></label>
+      <input type="number" id="final-wager-1">
+    </div>
+    <div class="final-wager-section">
+      <label id="final-wager-label-2"></label>
+      <input type="number" id="final-wager-2">
+    </div>
+
+    <button id="final-lock-wagers">Lock In Wagers</button>
+  </div>
+
+  <!-- ========== SCREEN: FINAL QUESTION ========== -->
+  <div id="screen-final-question" class="screen">
+    <div id="final-q-text"></div>
+    <div id="final-timer"></div>
+
+    <div class="final-answer-section">
+      <label id="final-answer-label-1"></label>
+      <input type="text" id="final-answer-1" placeholder="Answer..." autocomplete="off">
+    </div>
+    <div class="final-answer-section">
+      <label id="final-answer-label-2"></label>
+      <input type="text" id="final-answer-2" placeholder="Answer..." autocomplete="off">
+    </div>
+
+    <button id="final-submit">Submit Answers</button>
+  </div>
+
+  <!-- ========== SCREEN: GAME OVER ========== -->
+  <div id="screen-game-over" class="screen">
+    <div id="winner-text"></div>
+    <div id="trophy"></div>
+    <div id="stats-container"></div>
+    <canvas id="confetti-canvas"></canvas>
+    <button id="play-again-btn">Play Again</button>
+    <button id="view-leaderboard-btn-2">View Leaderboard</button>
+  </div>
+
+  <!-- ========== SCREEN: LEADERBOARD ========== -->
+  <div id="screen-leaderboard" class="screen">
+    <h2>Leaderboard</h2>
+    <div id="leaderboard-table"></div>
+    <button id="back-to-lobby-btn">Back to Lobby</button>
+  </div>
+
+  <script src="sounds.js"></script>
+  <script src="confetti.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
