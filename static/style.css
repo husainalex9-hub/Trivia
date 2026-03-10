@@ -92,6 +92,20 @@ input[type="number"]::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
 
+/* Player input row */
+.player-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.mode-select,
+.diff-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 /* Mode & Difficulty toggle buttons */
 .mode-btn,
 .diff-btn {
@@ -150,6 +164,12 @@ input[type="number"]::placeholder {
   color: #fff;
 }
 
+.category-card.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Start button */
 #start-btn {
   background: linear-gradient(135deg, #667eea, #764ba2);
@@ -198,10 +218,81 @@ input[type="number"]::placeholder {
   justify-content: center;
   min-height: 100vh;
   gap: 1.5rem;
+  text-align: center;
+  padding: 2rem;
 }
 
 #screen-loading.active {
   display: flex;
+}
+
+.loading-hint {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.error-msg {
+  color: #f44336;
+  font-size: 1rem;
+  max-width: 400px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.loading-msg {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
+  margin: 0.3rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.retry-btn:hover {
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+  transform: translateY(-1px);
+}
+
+.retry-btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.retry-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+/* ===== ERROR TOAST ===== */
+.error-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(244, 67, 54, 0.9);
+  color: #fff;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  z-index: 9999;
+  max-width: 90vw;
+  text-align: center;
+  animation: fade-in 0.3s ease;
+  backdrop-filter: blur(4px);
 }
 
 .spinner {
@@ -229,10 +320,8 @@ input[type="number"]::placeholder {
 
 .player-display {
   display: flex;
-  gap: 0.75rem;
-}
-
-.player-box {
+  flex-direction: column;
+  align-items: center;
   background: rgba(255, 255, 255, 0.07);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
@@ -240,11 +329,27 @@ input[type="number"]::placeholder {
   font-size: 1rem;
   font-weight: bold;
   transition: all 0.3s;
+  min-width: 120px;
+  text-align: center;
 }
 
-.player-box.active-player {
+.player-display.active-player {
   animation: pulse-glow 1.5s infinite;
   border-color: #ffd700;
+}
+
+.player-display .player-name {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.player-display .player-score {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffd700;
+  display: inline-block;
 }
 
 #board-grid {
@@ -421,13 +526,13 @@ input[type="number"]::placeholder {
   border-color: transparent;
 }
 
-#q-result {
+#q-result,
+#dd-result {
   font-size: 1.2rem;
   font-weight: bold;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  display: none;
 }
 
 .result-correct {
@@ -452,7 +557,7 @@ input[type="number"]::placeholder {
   font-size: 0.95rem;
   font-family: inherit;
   transition: all 0.2s;
-  display: none;
+  margin-top: 0.5rem;
 }
 
 #back-to-board:hover {
@@ -548,10 +653,8 @@ input[type="number"]::placeholder {
 }
 
 /* ===== FINAL JEOPARDY SCREENS ===== */
-#screen-final-jeopardy,
-#screen-final-wager,
-#screen-final-question,
-#screen-final-reveal {
+#screen-final-category,
+#screen-final-question {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.88);
@@ -562,10 +665,8 @@ input[type="number"]::placeholder {
   backdrop-filter: blur(4px);
 }
 
-#screen-final-jeopardy.active,
-#screen-final-wager.active,
-#screen-final-question.active,
-#screen-final-reveal.active {
+#screen-final-category.active,
+#screen-final-question.active {
   display: flex;
   animation: fade-in 0.4s ease;
 }
@@ -610,6 +711,71 @@ input[type="number"]::placeholder {
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
+}
+
+.final-wager-section,
+.final-answer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.final-wager-section label,
+.final-answer-section label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.final-wager-section input,
+.final-answer-section input {
+  width: 100%;
+}
+
+#final-category-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  background: linear-gradient(90deg, #ffd700, #f093fb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 2rem;
+}
+
+#final-q-text {
+  font-size: 1.3rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.final-card h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(90deg, #ffd700, #f093fb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+/* Sound toggle in lobby */
+.sound-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
 }
 
 /* ===== GAME OVER SCREEN ===== */

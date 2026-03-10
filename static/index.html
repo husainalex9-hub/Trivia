@@ -10,38 +10,54 @@
 
   <!-- ========== SCREEN: LOBBY ========== -->
   <div id="screen-lobby" class="screen active">
-    <h1>TRIVIA NIGHT <span>Are you a retard?</span></h1>
+    <h1 class="lobby-title">TRIVIA NIGHT</h1>
+    <p class="lobby-subtitle">Are you a retard?</p>
 
-    <div class="player-inputs">
-      <input type="text" id="p1-name" placeholder="Player 1 Name" autocomplete="off">
-      <input type="text" id="p2-name" placeholder="Player 2 Name" autocomplete="off">
+    <div class="lobby-section">
+      <span class="lobby-label">Players</span>
+      <div class="player-inputs">
+        <input type="text" id="p1-name" placeholder="Player 1 Name" autocomplete="off">
+        <input type="text" id="p2-name" placeholder="Player 2 Name" autocomplete="off">
+      </div>
     </div>
 
-    <div class="mode-select">
-      <button class="mode-btn" data-mode="free">Free Text</button>
-      <button class="mode-btn" data-mode="mc">Multiple Choice</button>
+    <div class="lobby-section">
+      <span class="lobby-label">Answer Mode</span>
+      <div class="mode-select">
+        <button class="mode-btn" data-mode="free">Free Text</button>
+        <button class="mode-btn" data-mode="mc">Multiple Choice</button>
+      </div>
     </div>
 
-    <div class="diff-select">
-      <button class="diff-btn" data-diff="easy">Easy</button>
-      <button class="diff-btn" data-diff="medium">Medium</button>
-      <button class="diff-btn" data-diff="hard">Hard</button>
+    <div class="lobby-section">
+      <span class="lobby-label">Difficulty</span>
+      <div class="diff-select">
+        <button class="diff-btn" data-diff="easy">Easy</button>
+        <button class="diff-btn" data-diff="medium">Medium</button>
+        <button class="diff-btn" data-diff="hard">Hard</button>
+      </div>
     </div>
 
-    <div class="sound-toggle">
-      <label for="sound-toggle">Sound</label>
-      <input type="checkbox" id="sound-toggle">
+    <div class="lobby-section sound-toggle">
+      <span class="lobby-label">Sound</span>
+      <label for="sound-toggle" class="sound-label">
+        <input type="checkbox" id="sound-toggle"> Enable Sound
+      </label>
     </div>
 
-    <div id="category-grid"></div>
+    <div class="lobby-section">
+      <span class="lobby-label">Categories (select exactly 6)</span>
+      <div id="category-grid" class="category-grid"></div>
+    </div>
 
     <button id="start-btn">Start Game</button>
-    <button id="view-leaderboard-btn">View Leaderboard</button>
+    <button id="view-leaderboard-btn" class="secondary-btn">View Leaderboard</button>
   </div>
 
   <!-- ========== SCREEN: LOADING ========== -->
   <div id="screen-loading" class="screen">
     <p>Fetching questions...</p>
+    <p class="loading-hint">This may take up to 60 seconds (API rate limits apply).</p>
     <div class="spinner"></div>
   </div>
 
@@ -63,55 +79,59 @@
 
   <!-- ========== SCREEN: QUESTION ========== -->
   <div id="screen-question" class="screen">
-    <div id="q-category"></div>
-    <div id="q-value"></div>
-    <div id="q-text"></div>
+    <div class="question-card">
+      <div id="q-category"></div>
+      <div id="q-value"></div>
+      <div id="q-text"></div>
 
-    <form id="text-answer-form">
-      <input type="text" id="text-answer-input" placeholder="Your answer..." autocomplete="off">
-      <button type="submit">Submit</button>
-    </form>
-
-    <div id="mc-choices">
-      <button class="mc-btn"></button>
-      <button class="mc-btn"></button>
-      <button class="mc-btn"></button>
-      <button class="mc-btn"></button>
-    </div>
-
-    <div id="q-result"></div>
-    <button id="back-to-board">Back to Board</button>
-  </div>
-
-  <!-- ========== SCREEN: DAILY DOUBLE ========== -->
-  <div id="screen-daily-double" class="screen">
-    <h2>DAILY DOUBLE!</h2>
-    <div id="dd-score"></div>
-
-    <div class="dd-wager-area">
-      <label>Min: <span id="dd-min"></span></label>
-      <input type="number" id="dd-wager">
-      <label>Max: <span id="dd-max"></span></label>
-    </div>
-    <button id="dd-lock-btn">Lock In Wager</button>
-
-    <div id="dd-question-area" class="hidden">
-      <div id="dd-q-text"></div>
-
-      <form id="dd-text-answer-form">
-        <input type="text" id="dd-text-answer-input" placeholder="Your answer..." autocomplete="off">
-        <button type="submit">Submit</button>
+      <form id="text-answer-form">
+        <input type="text" id="text-answer-input" placeholder="Your answer..." autocomplete="off">
+        <button type="submit" class="action-btn">Submit</button>
       </form>
 
-      <div id="dd-mc-choices">
+      <div id="mc-choices">
         <button class="mc-btn"></button>
         <button class="mc-btn"></button>
         <button class="mc-btn"></button>
         <button class="mc-btn"></button>
       </div>
 
-      <div id="dd-result"></div>
-      <button id="dd-continue-btn">Continue</button>
+      <div id="q-result"></div>
+      <button id="back-to-board" class="secondary-btn">Back to Board</button>
+    </div>
+  </div>
+
+  <!-- ========== SCREEN: DAILY DOUBLE ========== -->
+  <div id="screen-daily-double" class="screen">
+    <div class="dd-card">
+      <h2 class="dd-title">DAILY DOUBLE!</h2>
+      <div id="dd-score"></div>
+
+      <div class="dd-wager-area">
+        <label>Min: <span id="dd-min"></span></label>
+        <input type="number" id="dd-wager" class="dd-wager-input">
+        <label>Max: <span id="dd-max"></span></label>
+      </div>
+      <button id="dd-lock-btn" class="action-btn">Lock In Wager</button>
+
+      <div id="dd-question-area" class="hidden">
+        <div id="dd-q-text"></div>
+
+        <form id="dd-text-answer-form">
+          <input type="text" id="dd-text-answer-input" placeholder="Your answer..." autocomplete="off">
+          <button type="submit" class="action-btn">Submit</button>
+        </form>
+
+        <div id="dd-mc-choices">
+          <button class="mc-btn"></button>
+          <button class="mc-btn"></button>
+          <button class="mc-btn"></button>
+          <button class="mc-btn"></button>
+        </div>
+
+        <div id="dd-result"></div>
+        <button id="dd-continue-btn" class="secondary-btn">Continue</button>
+      </div>
     </div>
   </div>
 
@@ -122,36 +142,40 @@
 
   <!-- ========== SCREEN: FINAL CATEGORY ========== -->
   <div id="screen-final-category" class="screen">
-    <h2>FINAL JEOPARDY</h2>
-    <div id="final-category-name"></div>
+    <div class="final-card">
+      <h2>FINAL JEOPARDY</h2>
+      <div id="final-category-name"></div>
 
-    <div class="final-wager-section">
-      <label id="final-wager-label-1"></label>
-      <input type="number" id="final-wager-1">
-    </div>
-    <div class="final-wager-section">
-      <label id="final-wager-label-2"></label>
-      <input type="number" id="final-wager-2">
-    </div>
+      <div class="final-wager-section">
+        <label id="final-wager-label-1"></label>
+        <input type="number" id="final-wager-1" min="0">
+      </div>
+      <div class="final-wager-section">
+        <label id="final-wager-label-2"></label>
+        <input type="number" id="final-wager-2" min="0">
+      </div>
 
-    <button id="final-lock-wagers">Lock In Wagers</button>
+      <button id="final-lock-wagers" class="action-btn">Lock In Wagers</button>
+    </div>
   </div>
 
   <!-- ========== SCREEN: FINAL QUESTION ========== -->
   <div id="screen-final-question" class="screen">
-    <div id="final-q-text"></div>
-    <div id="final-timer"></div>
+    <div class="final-card">
+      <div id="final-q-text"></div>
+      <div id="final-timer"></div>
 
-    <div class="final-answer-section">
-      <label id="final-answer-label-1"></label>
-      <input type="text" id="final-answer-1" placeholder="Answer..." autocomplete="off">
-    </div>
-    <div class="final-answer-section">
-      <label id="final-answer-label-2"></label>
-      <input type="text" id="final-answer-2" placeholder="Answer..." autocomplete="off">
-    </div>
+      <div class="final-answer-section">
+        <label id="final-answer-label-1"></label>
+        <input type="text" id="final-answer-1" placeholder="Answer..." autocomplete="off">
+      </div>
+      <div class="final-answer-section">
+        <label id="final-answer-label-2"></label>
+        <input type="text" id="final-answer-2" placeholder="Answer..." autocomplete="off">
+      </div>
 
-    <button id="final-submit">Submit Answers</button>
+      <button id="final-submit" class="action-btn">Submit Answers</button>
+    </div>
   </div>
 
   <!-- ========== SCREEN: GAME OVER ========== -->
@@ -160,15 +184,15 @@
     <div id="trophy"></div>
     <div id="stats-container"></div>
     <canvas id="confetti-canvas"></canvas>
-    <button id="play-again-btn">Play Again</button>
-    <button id="view-leaderboard-btn-2">View Leaderboard</button>
+    <button id="play-again-btn" class="action-btn">Play Again</button>
+    <button id="view-leaderboard-btn-2" class="secondary-btn">View Leaderboard</button>
   </div>
 
   <!-- ========== SCREEN: LEADERBOARD ========== -->
   <div id="screen-leaderboard" class="screen">
     <h2>Leaderboard</h2>
     <div id="leaderboard-table"></div>
-    <button id="back-to-lobby-btn">Back to Lobby</button>
+    <button id="back-to-lobby-btn" class="secondary-btn">Back to Lobby</button>
   </div>
 
   <script src="sounds.js"></script>

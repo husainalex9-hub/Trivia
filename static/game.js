@@ -4,13 +4,25 @@
 // ============================================================
 
 // ------------------------------------
+// Helpers
+// ------------------------------------
+
+/** Decode HTML entities returned by the OpenTDB API */
+function decodeHTML(str) {
+  if (!str) return str;
+  const txt = document.createElement("textarea");
+  txt.innerHTML = str;
+  return txt.value;
+}
+
+// ------------------------------------
 // Game State
 // ------------------------------------
 let game = {
   players: ["Player 1", "Player 2"],
   scores: [0, 0],
   activePlayer: 0,        // 0-indexed
-  answerMode: "mc",       // "mc" | "free"
+  answerMode: "mc",       // "mc" | "free"  (client-side representation)
   difficulty: "medium",
   currentRound: 1,
   soundEnabled: true,
@@ -38,16 +50,50 @@ function showScreen(id) {
 // ------------------------------------
 // Score / Player Displays
 // ------------------------------------
+
+/** Animate score counting from `from` to `to` over ~500ms */
+function animateScore(el, from, to) {
+  const duration = 500;
+  const start = performance.now();
+  const diff = to - from;
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out quad
+    const eased = 1 - (1 - progress) * (1 - progress);
+    const current = Math.round(from + diff * eased);
+    el.textContent = "$" + current;
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = "$" + to;
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
 function updateScoreDisplays() {
   const displays = document.querySelectorAll(".player-display");
-  displays[0].querySelector(".player-score").textContent = "$" + game.scores[0];
-  displays[1].querySelector(".player-score").textContent = "$" + game.scores[1];
 
-  // Brief bounce animation
-  displays.forEach(d => {
+  displays.forEach((d, i) => {
     const scoreEl = d.querySelector(".player-score");
-    scoreEl.classList.add("score-bounce");
-    setTimeout(() => scoreEl.classList.remove("score-bounce"), 400);
+    const oldText = scoreEl.textContent || "$0";
+    const oldVal = parseInt(oldText.replace("$", "")) || 0;
+    const newVal = game.scores[i];
+
+    if (oldVal !== newVal) {
+      // Animate counting and bounce
+      scoreEl.classList.remove("score-bounce");
+      // Force reflow to restart animation
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add("score-bounce");
+      animateScore(scoreEl, oldVal, newVal);
+      setTimeout(() => scoreEl.classList.remove("score-bounce"), 500);
+    } else {
+      scoreEl.textContent = "$" + newVal;
+    }
   });
 }
 
@@ -60,7 +106,9 @@ function initPlayerDisplays() {
   const displays = document.querySelectorAll(".player-display");
   displays[0].querySelector(".player-name").textContent = game.players[0];
   displays[1].querySelector(".player-name").textContent = game.players[1];
-  updateScoreDisplays();
+  // Set initial scores without animation
+  displays[0].querySelector(".player-score").textContent = "$0";
+  displays[1].querySelector(".player-score").textContent = "$0";
   updateActivePlayerDisplay();
 }
 
@@ -71,17 +119,20 @@ function renderBoard(boardData) {
   const grid = document.getElementById("board-grid");
   grid.innerHTML = "";
 
+  // board is an array of category objects: [{ name, questions: [{id, value, answered, isDailyDouble}] }]
+  const categories = Array.isArray(boardData) ? boardData : (boardData.board || boardData.categories || []);
+
   // Category headers
-  boardData.categories.forEach(cat => {
+  categories.forEach(cat => {
     const header = document.createElement("div");
     header.className = "category-header";
-    header.textContent = cat.name;
+    header.textContent = decodeHTML(cat.name);
     grid.appendChild(header);
   });
 
   // Tiles row by row (5 rows × 6 columns)
   for (let row = 0; row < 5; row++) {
-    boardData.categories.forEach((cat, col) => {
+    categories.forEach((cat, col) => {
       const q = cat.questions[row];
       const tile = document.createElement("div");
       tile.className = "tile" + (q.answered ? " used" : "");
@@ -89,7 +140,7 @@ function renderBoard(boardData) {
       tile.dataset.questionId = q.id;
       tile.textContent = "$" + q.value;
       if (!q.answered) {
-        tile.addEventListener("click", () => openQuestion(q.id, q.value, cat.name, col, tile));
+        tile.addEventListener("click", () => openQuestion(q.id, q.value, decodeHTML(cat.name), col, tile));
       }
       grid.appendChild(tile);
     });
@@ -100,8 +151,23 @@ function renderBoard(boardData) {
 // Question Flow
 // ------------------------------------
 async function openQuestion(questionId, value, category, col, tile) {
-  const res = await fetch("/api/question/" + questionId);
-  const data = await res.json();
+  let data;
+  try {
+    const res = await fetch("/api/question/" + questionId);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showUserError("Failed to load question: " + (err.error || res.status));
+      return;
+    }
+    data = await res.json();
+  } catch (err) {
+    showUserError("Network error loading question. Please try again.");
+    return;
+  }
+
+  // Decode entities on question text
+  if (data.question) data.question = decodeHTML(data.question);
+  if (data.choices) data.choices = data.choices.map(decodeHTML);
 
   if (data.isDailyDouble) {
     showDailyDouble(questionId, data, value, category, tile);
@@ -152,19 +218,38 @@ async function openQuestion(questionId, value, category, col, tile) {
 async function submitAnswer(questionId, answer, value, category, tile) {
   // Disable UI to prevent double-submits
   document.querySelectorAll("#mc-choices .mc-btn").forEach(b => { b.disabled = true; });
-  if (document.getElementById("text-answer-form")) {
-    const submitBtn = document.querySelector("#text-answer-form button[type='submit']");
-    if (submitBtn) submitBtn.disabled = true;
+  const submitBtn = document.querySelector("#text-answer-form button[type='submit']");
+  if (submitBtn) submitBtn.disabled = true;
+
+  let data;
+  try {
+    const res = await fetch("/api/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId,
+        answer,
+        player: game.players[game.activePlayer], // server expects player name string
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showUserError("Error submitting answer: " + (err.error || res.status));
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+    data = await res.json();
+  } catch (err) {
+    showUserError("Network error. Please try again.");
+    if (submitBtn) submitBtn.disabled = false;
+    return;
   }
 
-  const res = await fetch("/api/answer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ questionId, answer, player: game.activePlayer }),
-  });
-  const data = await res.json();
-
-  game.scores = [data.scores[0], data.scores[1]];
+  // Server returns scores as { "PlayerName": score, ... }
+  game.scores = [
+    data.scores[game.players[0]] ?? game.scores[0],
+    data.scores[game.players[1]] ?? game.scores[1],
+  ];
   updateScoreDisplays();
 
   if (game.soundEnabled) {
@@ -183,7 +268,7 @@ async function submitAnswer(questionId, answer, value, category, tile) {
     }
   } else {
     resultEl.className = "result-wrong";
-    resultEl.textContent = "Wrong! The answer was: " + data.correctAnswer;
+    resultEl.textContent = "Wrong! The answer was: " + decodeHTML(data.correctAnswer);
     game.stats[game.activePlayer].wrong++;
     game.activePlayer = game.activePlayer === 0 ? 1 : 0;
   }
@@ -200,6 +285,7 @@ async function submitAnswer(questionId, answer, value, category, tile) {
   tile.onclick = null;
 
   document.getElementById("back-to-board").classList.remove("hidden");
+  if (submitBtn) submitBtn.disabled = false;
   game.answeredCount++;
 }
 
@@ -231,11 +317,18 @@ async function startRound2() {
 
   await new Promise(r => setTimeout(r, 3000));
 
-  const res = await fetch("/api/board/2");
-  game.board = await res.json();
-  document.getElementById("round-label").textContent = "Double Jeopardy";
-  renderBoard(game.board);
-  showScreen("screen-board");
+  try {
+    const res = await fetch("/api/board/2");
+    if (!res.ok) throw new Error("Server error " + res.status);
+    const data = await res.json();
+    game.board = data.board || data;
+    document.getElementById("round-label").textContent = "Double Jeopardy";
+    renderBoard(game.board);
+    showScreen("screen-board");
+  } catch (err) {
+    showUserError("Failed to load round 2: " + err.message);
+    showScreen("screen-board");
+  }
 }
 
 // ------------------------------------
@@ -303,14 +396,34 @@ async function submitDailyDouble(questionId, answer, wager, category, tile, ddRe
   // Disable buttons to prevent double-submit
   document.querySelectorAll("#dd-mc-choices .mc-btn").forEach(b => { b.disabled = true; });
 
-  const res = await fetch("/api/daily-double", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ questionId, wager, answer, player: game.activePlayer }),
-  });
-  const data = await res.json();
+  let data;
+  try {
+    const res = await fetch("/api/daily-double", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId,
+        wager,
+        answer,
+        player: game.players[game.activePlayer], // server expects player name string
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showUserError("Error submitting daily double: " + (err.error || res.status));
+      return;
+    }
+    data = await res.json();
+  } catch (err) {
+    showUserError("Network error. Please try again.");
+    return;
+  }
 
-  game.scores = [data.scores[0], data.scores[1]];
+  // Server returns scores as { "PlayerName": score, ... }
+  game.scores = [
+    data.scores[game.players[0]] ?? game.scores[0],
+    data.scores[game.players[1]] ?? game.scores[1],
+  ];
   updateScoreDisplays();
 
   if (game.soundEnabled) {
@@ -327,7 +440,7 @@ async function submitDailyDouble(questionId, answer, wager, category, tile, ddRe
     }
   } else {
     ddResult.className = "result-wrong";
-    ddResult.textContent = "Wrong! The answer was: " + data.correctAnswer + " (-$" + Math.abs(data.pointChange) + ")";
+    ddResult.textContent = "Wrong! The answer was: " + decodeHTML(data.correctAnswer) + " (-$" + Math.abs(data.pointChange) + ")";
     game.stats[game.activePlayer].wrong++;
     game.activePlayer = game.activePlayer === 0 ? 1 : 0;
     updateActivePlayerDisplay();
@@ -360,11 +473,10 @@ async function submitDailyDouble(questionId, answer, wager, category, tile, ddRe
 async function startFinalJeopardy() {
   showScreen("screen-final-category");
 
-  const stateRes = await fetch("/api/game-state");
-  const state = await stateRes.json();
-
-  document.getElementById("final-category-name").textContent =
-    state.finalJeopardy ? state.finalJeopardy.category : "Final Jeopardy";
+  // game-state endpoint doesn't expose the final question;
+  // the final question text is retrieved when we fetch the question directly
+  // For now we just show "Final Jeopardy" as the category placeholder.
+  document.getElementById("final-category-name").textContent = "Final Jeopardy";
 
   // Set player name labels
   const label1 = document.getElementById("final-wager-label-1");
@@ -381,8 +493,7 @@ async function startFinalJeopardy() {
   const w1Input = document.getElementById("final-wager-1");
   const w2Input = document.getElementById("final-wager-2");
 
-  w1Input.max = Math.max(0, game.scores[0]);
-  w2Input.max = Math.max(0, game.scores[1]);
+  // Negative / zero scores: auto-wager $0 and disable input
   w1Input.value = "";
   w2Input.value = "";
   w1Input.disabled = false;
@@ -391,30 +502,59 @@ async function startFinalJeopardy() {
   if (game.scores[0] <= 0) {
     w1Input.value = 0;
     w1Input.disabled = true;
+  } else {
+    w1Input.max = game.scores[0];
   }
+
   if (game.scores[1] <= 0) {
     w2Input.value = 0;
     w2Input.disabled = true;
+  } else {
+    w2Input.max = game.scores[1];
   }
 
   document.getElementById("final-lock-wagers").onclick = async () => {
     const w1 = Math.max(0, Math.min(parseInt(w1Input.value) || 0, Math.max(0, game.scores[0])));
     const w2 = Math.max(0, Math.min(parseInt(w2Input.value) || 0, Math.max(0, game.scores[1])));
 
-    await fetch("/api/final-wager", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player: 0, wager: w1 }),
-    });
-    await fetch("/api/final-wager", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player: 1, wager: w2 }),
-    });
+    try {
+      const r1 = await fetch("/api/final-wager", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player: game.players[0], wager: w1 }),
+      });
+      if (!r1.ok) {
+        const err = await r1.json().catch(() => ({}));
+        showUserError("Wager error: " + (err.error || r1.status));
+        return;
+      }
+      const r2 = await fetch("/api/final-wager", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player: game.players[1], wager: w2 }),
+      });
+      if (!r2.ok) {
+        const err = await r2.json().catch(() => ({}));
+        showUserError("Wager error: " + (err.error || r2.status));
+        return;
+      }
+    } catch (err) {
+      showUserError("Network error submitting wagers. Please try again.");
+      return;
+    }
+
+    // Fetch the final Jeopardy question text
+    let finalQuestion = "What is the final answer?";
+    try {
+      const qRes = await fetch("/api/question/final-0");
+      if (qRes.ok) {
+        const qData = await qRes.json();
+        finalQuestion = decodeHTML(qData.question) || finalQuestion;
+      }
+    } catch (_) {}
 
     showScreen("screen-final-question");
-    document.getElementById("final-q-text").textContent =
-      state.finalJeopardy ? state.finalJeopardy.question : "";
+    document.getElementById("final-q-text").textContent = finalQuestion;
     document.getElementById("final-answer-1").value = "";
     document.getElementById("final-answer-2").value = "";
 
@@ -456,22 +596,33 @@ async function submitFinalAnswers() {
   const a1 = document.getElementById("final-answer-1").value;
   const a2 = document.getElementById("final-answer-2").value;
 
-  await fetch("/api/final-answer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ player: 0, answer: a1 }),
-  });
-  const res = await fetch("/api/final-answer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ player: 1, answer: a2 }),
-  });
-  const data = await res.json();
+  try {
+    await fetch("/api/final-answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player: game.players[0], answer: a1 }),
+    });
+    const res = await fetch("/api/final-answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player: game.players[1], answer: a2 }),
+    });
 
-  document.getElementById("final-submit").disabled = false;
+    document.getElementById("final-submit").disabled = false;
 
-  if (data.results) {
-    await revealFinalResults(data.results);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showUserError("Error submitting final answers: " + (err.error || res.status));
+      return;
+    }
+
+    const data = await res.json();
+    if (data.results) {
+      await revealFinalResults(data.results);
+    }
+  } catch (err) {
+    document.getElementById("final-submit").disabled = false;
+    showUserError("Network error submitting answers. Please try again.");
   }
 }
 
@@ -489,8 +640,8 @@ async function revealFinalResults(results) {
   resultEl.className = "hidden";
   resultEl.textContent = "";
 
-  // Player 1 reveal
-  const r1 = results.find(r => r.player === 0);
+  // Player 1 reveal — results keyed by player name
+  const r1 = results.find(r => r.player === game.players[0]);
   if (r1) {
     qText.textContent = game.players[0] + " wagered $" + r1.wager;
     resultEl.classList.remove("hidden");
@@ -505,7 +656,7 @@ async function revealFinalResults(results) {
   }
 
   // Player 2 reveal
-  const r2 = results.find(r => r.player === 1);
+  const r2 = results.find(r => r.player === game.players[1]);
   if (r2) {
     qText.textContent = game.players[1] + " wagered $" + r2.wager;
     resultEl.className = r2.correct ? "result-correct" : "result-wrong";
@@ -515,7 +666,10 @@ async function revealFinalResults(results) {
     if (game.soundEnabled) {
       if (r2.correct) SoundManager.correct(); else SoundManager.wrong();
     }
-    if (r1) game.scores = [r1.finalScore, r2.finalScore];
+    game.scores = [
+      r1 ? r1.finalScore : game.scores[0],
+      r2.finalScore,
+    ];
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
@@ -650,6 +804,23 @@ document.getElementById("play-again-btn").addEventListener("click", () => {
 });
 
 // ------------------------------------
+// User-friendly error display
+// ------------------------------------
+function showUserError(message) {
+  // Show on whichever screen is active using a toast/alert
+  const existing = document.getElementById("user-error-toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.id = "user-error-toast";
+  toast.className = "error-toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5000);
+}
+
+// ------------------------------------
 // Global Event Listeners
 // ------------------------------------
 document.getElementById("view-leaderboard-btn").addEventListener("click", showLeaderboard);
@@ -695,18 +866,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // --- Fetch and render categories ---
-  try {
-    const res = await fetch("/api/categories");
-    const catData = await res.json();
-    renderCategoryGrid(catData.trivia_categories || []);
-  } catch (err) {
-    console.error("Failed to load categories:", err);
-    document.getElementById("category-grid").textContent = "Failed to load categories.";
-  }
+  await loadCategories();
 
   // --- Start button ---
   document.getElementById("start-btn").addEventListener("click", startGame);
 });
+
+async function loadCategories() {
+  const grid = document.getElementById("category-grid");
+  grid.innerHTML = "<p class='loading-msg'>Loading categories...</p>";
+
+  try {
+    const res = await fetch("/api/categories");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const catData = await res.json();
+    if (catData.error) throw new Error(catData.error);
+    renderCategoryGrid(catData.trivia_categories || []);
+  } catch (err) {
+    console.error("Failed to load categories:", err);
+    grid.innerHTML =
+      "<p class='error-msg'>Failed to load categories: " + err.message + "</p>" +
+      "<button id='retry-categories-btn' class='retry-btn'>Retry</button>";
+    document.getElementById("retry-categories-btn").addEventListener("click", loadCategories);
+  }
+}
 
 // ------------------------------------
 // Category Grid (lobby)
@@ -721,7 +904,7 @@ function renderCategoryGrid(categories) {
   categories.forEach(cat => {
     const card = document.createElement("div");
     card.className = "category-card";
-    card.textContent = cat.name;
+    card.textContent = decodeHTML(cat.name);
     card.dataset.id = cat.id;
 
     card.addEventListener("click", () => toggleCategoryCard(card, cat.id));
@@ -779,13 +962,72 @@ async function startGame() {
 
   showScreen("screen-loading");
 
+  // Map client-side mode names to what the server expects
+  const serverAnswerMode = game.answerMode === "free" ? "free-text" : "multiple-choice";
+
   try {
     const res = await fetch("/api/new-game", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         players: [p1, p2],
-        answerMode: game.answerMode,
+        answerMode: serverAnswerMode,
+        difficulty: game.difficulty,
+        categoryIds: selectedCategories,
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Server error " + res.status);
+    }
+
+    const data = await res.json();
+    // Server returns { gameId, board: [...] }
+    game.board = data.board;
+
+    document.getElementById("round-label").textContent = "Jeopardy Round";
+    initPlayerDisplays();
+    renderBoard(game.board);
+    showScreen("screen-board");
+  } catch (err) {
+    console.error("Failed to start game:", err);
+    // Show error on loading screen with retry button
+    const loadingScreen = document.getElementById("screen-loading");
+    loadingScreen.innerHTML =
+      "<p class='error-msg'>Failed to start game: " + err.message + "</p>" +
+      "<p class='loading-hint'>The API may be rate-limited. Please wait a moment and try again.</p>" +
+      "<button id='retry-start-btn' class='retry-btn'>Retry</button>" +
+      "<button id='cancel-start-btn' class='retry-btn secondary'>Back to Lobby</button>";
+    document.getElementById("retry-start-btn").addEventListener("click", () => {
+      // Restore loading screen and retry
+      loadingScreen.innerHTML =
+        "<p>Fetching questions...</p>" +
+        "<p class='loading-hint'>This may take up to 60 seconds (API rate limits apply).</p>" +
+        "<div class='spinner'></div>";
+      // Re-invoke startGame flow (no recursion — just redo the fetch)
+      startGameFetch(p1, p2, serverAnswerMode);
+    });
+    document.getElementById("cancel-start-btn").addEventListener("click", () => {
+      // Restore loading screen markup for next time
+      loadingScreen.innerHTML =
+        "<p>Fetching questions...</p>" +
+        "<p class='loading-hint'>This may take up to 60 seconds (API rate limits apply).</p>" +
+        "<div class='spinner'></div>";
+      showScreen("screen-lobby");
+    });
+  }
+}
+
+async function startGameFetch(p1, p2, serverAnswerMode) {
+  const loadingScreen = document.getElementById("screen-loading");
+  try {
+    const res = await fetch("/api/new-game", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        players: [p1, p2],
+        answerMode: serverAnswerMode,
         difficulty: game.difficulty,
         categoryIds: selectedCategories,
       }),
@@ -805,7 +1047,24 @@ async function startGame() {
     showScreen("screen-board");
   } catch (err) {
     console.error("Failed to start game:", err);
-    alert("Failed to start game: " + err.message);
-    showScreen("screen-lobby");
+    loadingScreen.innerHTML =
+      "<p class='error-msg'>Failed to start game: " + err.message + "</p>" +
+      "<p class='loading-hint'>The API may be rate-limited. Please wait a moment and try again.</p>" +
+      "<button id='retry-start-btn' class='retry-btn'>Retry</button>" +
+      "<button id='cancel-start-btn' class='retry-btn secondary'>Back to Lobby</button>";
+    document.getElementById("retry-start-btn").addEventListener("click", () => {
+      loadingScreen.innerHTML =
+        "<p>Fetching questions...</p>" +
+        "<p class='loading-hint'>This may take up to 60 seconds (API rate limits apply).</p>" +
+        "<div class='spinner'></div>";
+      startGameFetch(p1, p2, serverAnswerMode);
+    });
+    document.getElementById("cancel-start-btn").addEventListener("click", () => {
+      loadingScreen.innerHTML =
+        "<p>Fetching questions...</p>" +
+        "<p class='loading-hint'>This may take up to 60 seconds (API rate limits apply).</p>" +
+        "<div class='spinner'></div>";
+      showScreen("screen-lobby");
+    });
   }
 }
