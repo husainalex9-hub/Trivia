@@ -346,7 +346,9 @@ app.post("/api/new-game", async (req, res) => {
   if (!Array.isArray(categoryIds) || categoryIds.length !== 6) {
     return res.status(400).json({ error: "categoryIds must be an array of 6 IDs" });
   }
-  const diff = difficulty || "medium";
+  // Remap difficulties: "hard" pulls medium-level questions from OpenTDB
+  const diffMap = { easy: "easy", medium: "medium", hard: "medium" };
+  const diff = diffMap[difficulty] || "medium";
   const mode = answerMode || "multiple-choice";
 
   try {
