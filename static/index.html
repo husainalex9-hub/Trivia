@@ -14,14 +14,9 @@
     <p class="lobby-subtitle">Test your knowledge!</p>
 
     <div class="lobby-section">
-      <span class="lobby-label">Players</span>
-      <div class="player-inputs">
-        <input type="text" id="p1-name" placeholder="Player 1 Name" autocomplete="off">
-        <input type="text" id="p2-name" placeholder="Player 2 Name" autocomplete="off">
-      </div>
-      <label class="cpu-label">
-        <input type="checkbox" id="cpu-toggle"> Player 2 is CPU
-      </label>
+      <span class="lobby-label">Players (2–6)</span>
+      <div id="player-list"></div>
+      <button id="add-player-btn" class="secondary-btn">+ Add Player</button>
     </div>
 
     <div class="lobby-section">
@@ -68,14 +63,7 @@
   <div id="screen-board" class="screen">
     <div class="board-header">
       <div id="round-label"></div>
-      <div class="player-display" id="player-display-1">
-        <span class="player-name"></span>
-        <span class="player-score"></span>
-      </div>
-      <div class="player-display" id="player-display-2">
-        <span class="player-name"></span>
-        <span class="player-score"></span>
-      </div>
+      <div id="player-displays"></div>
     </div>
     <div id="board-grid"></div>
     <button id="end-game-btn" class="secondary-btn" style="margin:1rem auto;display:block;">End Game</button>
@@ -86,6 +74,7 @@
     <div class="question-card">
       <div id="q-category"></div>
       <div id="q-value"></div>
+      <div id="q-whose-turn"></div>
       <div id="q-text"></div>
 
       <form id="text-answer-form">
@@ -109,6 +98,7 @@
   <div id="screen-daily-double" class="screen">
     <div class="dd-card">
       <h2 class="dd-title">DAILY DOUBLE!</h2>
+      <div id="dd-player-name"></div>
       <div id="dd-score"></div>
 
       <div class="dd-wager-area">
@@ -149,16 +139,7 @@
     <div class="final-card">
       <h2>FINAL JEOPARDY</h2>
       <div id="final-category-name"></div>
-
-      <div class="final-wager-section">
-        <label id="final-wager-label-1"></label>
-        <input type="number" id="final-wager-1" min="0">
-      </div>
-      <div class="final-wager-section">
-        <label id="final-wager-label-2"></label>
-        <input type="number" id="final-wager-2" min="0">
-      </div>
-
+      <div id="final-wagers-container"></div>
       <button id="final-lock-wagers" class="action-btn">Lock In Wagers</button>
     </div>
   </div>
@@ -168,16 +149,7 @@
     <div class="final-card">
       <div id="final-q-text"></div>
       <div id="final-timer"></div>
-
-      <div class="final-answer-section">
-        <label id="final-answer-label-1"></label>
-        <input type="text" id="final-answer-1" placeholder="Answer..." autocomplete="off">
-      </div>
-      <div class="final-answer-section">
-        <label id="final-answer-label-2"></label>
-        <input type="text" id="final-answer-2" placeholder="Answer..." autocomplete="off">
-      </div>
-
+      <div id="final-answers-container"></div>
       <button id="final-submit" class="action-btn">Submit Answers</button>
     </div>
   </div>
