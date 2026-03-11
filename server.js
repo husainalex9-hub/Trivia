@@ -15,6 +15,7 @@ let gameState = null;
 // Custom Food & Drink category (ID 999)
 // ---------------------------------------------------------------------------
 const FOOD_CATEGORY_ID = 999;
+const ARCHITECTURE_CATEGORY_ID = 998;
 const FOOD_QUESTIONS = [
   { question: "What country is the origin of the croissant?", correctAnswer: "Austria", incorrectAnswers: ["France", "Italy", "Germany"] },
   { question: "What is the main ingredient in hummus?", correctAnswer: "Chickpeas", incorrectAnswers: ["Lentils", "Black beans", "Tahini"] },
@@ -66,6 +67,59 @@ const FOOD_QUESTIONS = [
   { question: "What nut is in the middle of a Ferrero Rocher?", correctAnswer: "Hazelnut", incorrectAnswers: ["Almond", "Peanut", "Walnut"] },
   { question: "Naan bread is traditionally associated with which cuisine?", correctAnswer: "Indian", incorrectAnswers: ["Turkish", "Arabic", "Persian"] },
   { question: "What is the most consumed beverage in the world after water?", correctAnswer: "Tea", incorrectAnswers: ["Coffee", "Beer", "Milk"] },
+];
+
+const ARCHITECTURE_QUESTIONS = [
+  { question: "Who designed the Guggenheim Museum in Bilbao, Spain?", correctAnswer: "Frank Gehry", incorrectAnswers: ["Zaha Hadid", "Renzo Piano", "Norman Foster"] },
+  { question: "What architectural style is Notre-Dame Cathedral in Paris?", correctAnswer: "Gothic", incorrectAnswers: ["Romanesque", "Baroque", "Renaissance"] },
+  { question: "Which architect designed Fallingwater in Pennsylvania?", correctAnswer: "Frank Lloyd Wright", incorrectAnswers: ["Le Corbusier", "Mies van der Rohe", "Louis Kahn"] },
+  { question: "What is the tallest building in the world as of 2024?", correctAnswer: "Burj Khalifa", incorrectAnswers: ["Shanghai Tower", "Merdeka 118", "One World Trade Center"] },
+  { question: "The Parthenon in Athens is built in which architectural order?", correctAnswer: "Doric", incorrectAnswers: ["Ionic", "Corinthian", "Tuscan"] },
+  { question: "Who designed the Sydney Opera House?", correctAnswer: "Jorn Utzon", incorrectAnswers: ["Oscar Niemeyer", "Frank Gehry", "Renzo Piano"] },
+  { question: "What material is the dome of the Pantheon in Rome made from?", correctAnswer: "Concrete", incorrectAnswers: ["Marble", "Brick", "Stone"] },
+  { question: "Which architect is known for the phrase 'Less is more'?", correctAnswer: "Mies van der Rohe", incorrectAnswers: ["Le Corbusier", "Frank Lloyd Wright", "Walter Gropius"] },
+  { question: "What is the name of the architectural school founded in Germany in 1919?", correctAnswer: "Bauhaus", incorrectAnswers: ["Art Nouveau", "De Stijl", "Constructivism"] },
+  { question: "The Sagrada Familia in Barcelona was designed by which architect?", correctAnswer: "Antoni Gaudi", incorrectAnswers: ["Santiago Calatrava", "Rafael Moneo", "Ricardo Bofill"] },
+  { question: "What type of arch has a pointed top, commonly seen in Gothic architecture?", correctAnswer: "Ogival arch", incorrectAnswers: ["Roman arch", "Horseshoe arch", "Flat arch"] },
+  { question: "Which ancient wonder was a lighthouse located in Egypt?", correctAnswer: "Lighthouse of Alexandria", incorrectAnswers: ["Colossus of Rhodes", "Great Pyramid of Giza", "Hanging Gardens"] },
+  { question: "What is a flying buttress used for?", correctAnswer: "Supporting walls from the outside", incorrectAnswers: ["Decorating rooftops", "Channeling rainwater", "Reinforcing floors"] },
+  { question: "Who designed the Glass House in New Canaan, Connecticut?", correctAnswer: "Philip Johnson", incorrectAnswers: ["Mies van der Rohe", "Richard Meier", "I.M. Pei"] },
+  { question: "What architectural style features ornate decoration, curved forms, and grandeur?", correctAnswer: "Baroque", incorrectAnswers: ["Gothic", "Minimalist", "Brutalist"] },
+  { question: "The Chrysler Building in New York is an example of which style?", correctAnswer: "Art Deco", incorrectAnswers: ["Art Nouveau", "Modernist", "Neoclassical"] },
+  { question: "Which architect designed the Louvre Pyramid in Paris?", correctAnswer: "I.M. Pei", incorrectAnswers: ["Jean Nouvel", "Renzo Piano", "Norman Foster"] },
+  { question: "What is the term for the wedge-shaped stone at the top of an arch?", correctAnswer: "Keystone", incorrectAnswers: ["Capstone", "Cornerstone", "Coping stone"] },
+  { question: "Brutalism as an architectural style primarily uses which material?", correctAnswer: "Raw concrete", incorrectAnswers: ["Steel", "Glass", "Brick"] },
+  { question: "Who designed the Farnsworth House in Illinois?", correctAnswer: "Mies van der Rohe", incorrectAnswers: ["Frank Lloyd Wright", "Philip Johnson", "Louis Kahn"] },
+  { question: "What is the oldest known architectural structure in the world?", correctAnswer: "Gobekli Tepe", incorrectAnswers: ["Stonehenge", "Great Pyramid of Giza", "Newgrange"] },
+  { question: "Which city is home to the Petronas Twin Towers?", correctAnswer: "Kuala Lumpur", incorrectAnswers: ["Singapore", "Jakarta", "Bangkok"] },
+  { question: "What does the term 'cantilever' refer to in architecture?", correctAnswer: "A beam anchored at only one end", incorrectAnswers: ["A rotating door mechanism", "A type of roof tile", "A circular window"] },
+  { question: "The Colosseum in Rome could hold approximately how many spectators?", correctAnswer: "50,000", incorrectAnswers: ["25,000", "80,000", "100,000"] },
+  { question: "Who is considered the father of modern architecture?", correctAnswer: "Le Corbusier", incorrectAnswers: ["Frank Lloyd Wright", "Walter Gropius", "Louis Sullivan"] },
+  { question: "What is a clerestory in architecture?", correctAnswer: "A high section of wall with windows for light", incorrectAnswers: ["A basement storage room", "A type of staircase", "A rooftop garden"] },
+  { question: "Which architect designed the Walt Disney Concert Hall in Los Angeles?", correctAnswer: "Frank Gehry", incorrectAnswers: ["Zaha Hadid", "Tadao Ando", "Rem Koolhaas"] },
+  { question: "What is the primary characteristic of Deconstructivism in architecture?", correctAnswer: "Fragmented and distorted forms", incorrectAnswers: ["Symmetrical facades", "Classical columns", "Minimal ornamentation"] },
+  { question: "The Hagia Sophia in Istanbul was originally built as what?", correctAnswer: "A cathedral", incorrectAnswers: ["A mosque", "A palace", "A marketplace"] },
+  { question: "What is a minaret?", correctAnswer: "A tall tower on a mosque", incorrectAnswers: ["A dome on a church", "A Roman column", "A type of bridge"] },
+  { question: "Which architect designed the Pompidou Centre in Paris?", correctAnswer: "Renzo Piano and Richard Rogers", incorrectAnswers: ["Norman Foster", "Jean Nouvel", "Frank Gehry"] },
+  { question: "What is a geodesic dome?", correctAnswer: "A spherical structure made of triangles", incorrectAnswers: ["A dome made of glass panels", "A half-cylinder roof", "A concrete shell structure"] },
+  { question: "Who designed the TWA Flight Center at JFK Airport?", correctAnswer: "Eero Saarinen", incorrectAnswers: ["Frank Lloyd Wright", "Oscar Niemeyer", "Alvar Aalto"] },
+  { question: "What ancient Roman building technique used a mixture of volcanic ash and lime?", correctAnswer: "Roman concrete (opus caementicium)", incorrectAnswers: ["Mud brick", "Rammed earth", "Dry stone walling"] },
+  { question: "Which architect designed the CCTV Headquarters in Beijing?", correctAnswer: "Rem Koolhaas", incorrectAnswers: ["Zaha Hadid", "Norman Foster", "Bjarke Ingels"] },
+  { question: "What is the term for the triangular area above a building's entrance in classical architecture?", correctAnswer: "Pediment", incorrectAnswers: ["Frieze", "Cornice", "Architrave"] },
+  { question: "The Taj Mahal is built primarily from which material?", correctAnswer: "White marble", incorrectAnswers: ["Sandstone", "Granite", "Limestone"] },
+  { question: "Who designed the Vitra Fire Station in Germany?", correctAnswer: "Zaha Hadid", incorrectAnswers: ["Tadao Ando", "Peter Zumthor", "Herzog & de Meuron"] },
+  { question: "What is an atrium in architecture?", correctAnswer: "An open central court in a building", incorrectAnswers: ["A type of roof", "An underground passage", "A decorative column"] },
+  { question: "Which style of architecture is the U.S. Capitol Building in Washington, D.C.?", correctAnswer: "Neoclassical", incorrectAnswers: ["Gothic Revival", "Art Deco", "Beaux-Arts"] },
+  { question: "What is the purpose of a gargoyle on a building?", correctAnswer: "To channel rainwater away from walls", incorrectAnswers: ["To ward off evil spirits", "Purely decorative", "To support the roof"] },
+  { question: "Who designed the Salk Institute in La Jolla, California?", correctAnswer: "Louis Kahn", incorrectAnswers: ["Richard Neutra", "Charles Eames", "Rudolf Schindler"] },
+  { question: "What is a ziggurat?", correctAnswer: "A stepped pyramid from ancient Mesopotamia", incorrectAnswers: ["An Egyptian tomb", "A Greek temple", "A Roman aqueduct"] },
+  { question: "Which architect is famous for designing buildings with extensive use of natural light and water?", correctAnswer: "Tadao Ando", incorrectAnswers: ["Kengo Kuma", "Shigeru Ban", "Toyo Ito"] },
+  { question: "What is a colonnade?", correctAnswer: "A row of columns supporting a roof", incorrectAnswers: ["A type of window", "A curved wall", "An underground tunnel"] },
+  { question: "The Empire State Building was completed in which year?", correctAnswer: "1931", incorrectAnswers: ["1929", "1935", "1941"] },
+  { question: "What is the name for the Japanese architectural concept of borrowed scenery?", correctAnswer: "Shakkei", incorrectAnswers: ["Wabi-sabi", "Engawa", "Tokonoma"] },
+  { question: "Which architect designed the Jewish Museum in Berlin?", correctAnswer: "Daniel Libeskind", incorrectAnswers: ["Peter Eisenman", "Frank Gehry", "Rem Koolhaas"] },
+  { question: "What is a buttress?", correctAnswer: "A structure built against a wall for support", incorrectAnswers: ["A window frame", "A roof beam", "A decorative arch"] },
+  { question: "The Flatiron Building in New York is known for what distinctive shape?", correctAnswer: "Triangular", incorrectAnswers: ["Cylindrical", "Hexagonal", "L-shaped"] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -272,6 +326,7 @@ app.get("/api/categories", async (req, res) => {
     // Inject custom Food & Drink category
     if (data.trivia_categories) {
       data.trivia_categories.push({ id: FOOD_CATEGORY_ID, name: "Food & Drink" });
+      data.trivia_categories.push({ id: ARCHITECTURE_CATEGORY_ID, name: "Architecture" });
       data.trivia_categories.sort((a, b) => a.name.localeCompare(b.name));
     }
     res.json(data);
@@ -304,10 +359,13 @@ app.post("/api/new-game", async (req, res) => {
     const allCategoryQuestions = [];
     for (let i = 0; i < 6; i++) {
       if (Number(categoryIds[i]) === FOOD_CATEGORY_ID) {
-        // Use hardcoded food questions — pick 10 random ones
         const shuffled = shuffle(FOOD_QUESTIONS);
         allCategoryQuestions.push(shuffled.slice(0, 10));
         console.log(`Using custom Food & Drink questions (${i + 1}/6)`);
+      } else if (Number(categoryIds[i]) === ARCHITECTURE_CATEGORY_ID) {
+        const shuffled = shuffle(ARCHITECTURE_QUESTIONS);
+        allCategoryQuestions.push(shuffled.slice(0, 10));
+        console.log(`Using custom Architecture questions (${i + 1}/6)`);
       } else {
         if (allCategoryQuestions.length > 0) await sleep(5500);
         console.log(`Fetching questions for category ${categoryIds[i]} (${i + 1}/6)...`);
@@ -354,6 +412,7 @@ app.post("/api/new-game", async (req, res) => {
       const catData = await catRes.json();
       categoryNames = categoryIds.map((id) => {
         if (Number(id) === FOOD_CATEGORY_ID) return "Food & Drink";
+        if (Number(id) === ARCHITECTURE_CATEGORY_ID) return "Architecture";
         const found = catData.trivia_categories.find((c) => c.id === id || c.id === Number(id));
         return found ? found.name : `Category ${id}`;
       });
